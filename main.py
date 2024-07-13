@@ -3,20 +3,48 @@ import sys
 
 FPS = 30
 WIDTH = 600
-CELLS = 20
+CELLS = 10
+CELLWIDTH = WIDTH/CELLS
+CELLOFFSET = 0.1
 
 WHITE = (255, 255, 255)
 
-def drawGrid(display):
-    for x in range(CELLS):
-        pygame.draw.line(display, WHITE, (x*(WIDTH*CELLS+(WIDTH-1))/(CELLS**2), 0), (x*(WIDTH*CELLS+(WIDTH-1))/(CELLS ** 2), WIDTH), 1)
+class Cell:
+    def __init__(self, x, y, isAlive) -> None:
+        self.x = x
+        self.y = y
+        self.isAlive = isAlive
 
+    def draw(self, display):
+        rect = pygame.rect.Rect(self.x * CELLWIDTH + CELLWIDTH*CELLOFFSET, self.y * CELLWIDTH + CELLWIDTH*CELLOFFSET, CELLWIDTH * (1 - CELLOFFSET*2), CELLWIDTH * (1 - CELLOFFSET*2))
+        pygame.draw.rect(display, WHITE, rect)
+
+def createCells():
+    cells = [[] for _ in range(CELLS)]
     for y in range(CELLS):
-        pygame.draw.line(display, WHITE, (0, y*(WIDTH*CELLS+(WIDTH-1))/(CELLS**2)), (WIDTH, y*(WIDTH*CELLS+(WIDTH-1))/(CELLS ** 2)), 1)
+        for x in range(CELLS):
+            cell = Cell(x, y, True)
+            cells[y].append(cell)
+
+    return cells
+
+def drawGrid(display):
+    for x in range(1, CELLS, 1):
+        pygame.draw.line(display, WHITE, (x*CELLWIDTH, 0), (x*CELLWIDTH, WIDTH), 1)
+
+    for y in range(1, CELLS, 1):
+        pygame.draw.line(display, WHITE, (0, y*CELLWIDTH), (WIDTH, y*CELLWIDTH), 1)
+
+def drawCells(cells, display):
+    for row in cells:
+        for cell in row:
+            cell.draw(display)
 
 def gameLoop(display):
     clock = pygame.time.Clock()
+    cells = createCells()
     drawGrid(display)
+    drawCells(cells, display)
 
     while True:
         clock.tick(FPS)
