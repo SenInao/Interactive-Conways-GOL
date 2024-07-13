@@ -1,16 +1,8 @@
 import pygame
 from eventHandler import handleEvents
-from dataclasses import dataclass
-from utils import createCells, checkCollision
+from utils import createCells, checkCollision, set_text
 from constants import *
-
-@dataclass
-class GameState:
-    display: pygame.Surface
-    cells: list
-    shouldDraw: bool = False
-    paused: bool = True
-    mouseDown: bool = False
+from gameState import GameState
 
 def drawGrid(display):
     for x in range(1, CELLS, 1):
@@ -24,12 +16,29 @@ def drawCells(cells, display):
         for cell in row:
             cell.draw(display)
 
-def drawGameState(gameState):
-    gameState.display.fill(BLACK)
-    drawCells(gameState.cells, gameState.display)
-    drawGrid(gameState.display)
+def drawSettings(display):
+    rect = pygame.rect.Rect(WIDTH/4, WIDTH/4, WIDTH/2, WIDTH/2)
+    pygame.draw.rect(display, GRAY, rect)
+    text = set_text("Settings: ESC", WIDTH/2, WIDTH/3, FONTSIZE)
+    display.blit(text[0], text[1])
+    text = set_text("Pause/Play simulation: SPACE", WIDTH/2, WIDTH/3 + 2*FONTSIZE, FONTSIZE)
+    display.blit(text[0], text[1])
+    text = set_text("Generate random world: R", WIDTH/2, WIDTH/3 + 4*FONTSIZE, FONTSIZE)
+    display.blit(text[0], text[1])
+    text = set_text("Clear world: C", WIDTH/2, WIDTH/3 + 6*FONTSIZE, FONTSIZE)
+    display.blit(text[0], text[1])
 
-def updateCells(gameState):
+def drawGameState(gameState: GameState):
+    gameState.display.fill(BLACK)
+
+    if (gameState.settingsOpen):
+        drawSettings(gameState.display)
+
+    else:
+        drawCells(gameState.cells, gameState.display)
+        drawGrid(gameState.display)
+
+def updateCells(gameState: GameState):
     newCells = [[] for _ in range(CELLS)]
     for y, row in enumerate(gameState.cells):
         for cell in row:
@@ -39,7 +48,7 @@ def updateCells(gameState):
     gameState.cells = newCells
 
 
-def updateGameState(gameState):
+def updateGameState(gameState: GameState):
     if (gameState.mouseDown):
         x,y = pygame.mouse.get_pos()
         cell = checkCollision(gameState, x, y)

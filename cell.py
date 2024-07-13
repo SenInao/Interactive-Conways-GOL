@@ -1,5 +1,6 @@
 import pygame
 from constants import *
+from gameState import GameState
 
 class Cell:
     def __init__(self, x, y, isAlive) -> None:
@@ -17,7 +18,7 @@ class Cell:
             return True
         return False
 
-    def updateState(self, gameState):
+    def updateState(self, gameState: GameState):
         cells = gameState.cells
         aliveNeighbours = 0
 
