@@ -1,65 +1,70 @@
 import pygame
-import sys
+from eventHandler import handleEvents
+from dataclasses import dataclass
+from utils import createCells, checkCollision
+from constants import *
 
-FPS = 30
-WIDTH = 600
-CELLS = 10
-CELLWIDTH = WIDTH/CELLS
-CELLOFFSET = 0.1
-
-WHITE = (255, 255, 255)
-
-class Cell:
-    def __init__(self, x, y, isAlive) -> None:
-        self.x = x
-        self.y = y
-        self.isAlive = isAlive
-
-    def draw(self, display):
-        rect = pygame.rect.Rect(self.x * CELLWIDTH + CELLWIDTH*CELLOFFSET, self.y * CELLWIDTH + CELLWIDTH*CELLOFFSET, CELLWIDTH * (1 - CELLOFFSET*2), CELLWIDTH * (1 - CELLOFFSET*2))
-        pygame.draw.rect(display, WHITE, rect)
-
-def createCells():
-    cells = [[] for _ in range(CELLS)]
-    for y in range(CELLS):
-        for x in range(CELLS):
-            cell = Cell(x, y, True)
-            cells[y].append(cell)
-
-    return cells
+@dataclass
+class GameState:
+    display: pygame.Surface
+    cells: list
+    shouldDraw: bool = False
+    paused: bool = True
+    mouseDown: bool = False
 
 def drawGrid(display):
     for x in range(1, CELLS, 1):
-        pygame.draw.line(display, WHITE, (x*CELLWIDTH, 0), (x*CELLWIDTH, WIDTH), 1)
+        pygame.draw.line(display, GRAY, (x*CELLWIDTH, 0), (x*CELLWIDTH, WIDTH), 1)
 
     for y in range(1, CELLS, 1):
-        pygame.draw.line(display, WHITE, (0, y*CELLWIDTH), (WIDTH, y*CELLWIDTH), 1)
+        pygame.draw.line(display, GRAY, (0, y*CELLWIDTH), (WIDTH, y*CELLWIDTH), 1)
 
 def drawCells(cells, display):
     for row in cells:
         for cell in row:
             cell.draw(display)
 
-def gameLoop(display):
+def drawGameState(gameState):
+    gameState.display.fill(BLACK)
+    drawCells(gameState.cells, gameState.display)
+    drawGrid(gameState.display)
+
+def updateCells(gameState):
+    newCells = [[] for _ in range(CELLS)]
+    for y, row in enumerate(gameState.cells):
+        for cell in row:
+            updatedCell = cell.updateState(gameState)
+            newCells[y].append(updatedCell)
+
+    gameState.cells = newCells
+
+
+def updateGameState(gameState):
+    if (gameState.mouseDown):
+        x,y = pygame.mouse.get_pos()
+        cell = checkCollision(gameState, x, y)
+        if (cell):
+            cell.isAlive = gameState.shouldDraw
+
+    if (not gameState.paused):
+        updateCells(gameState)
+
+def gameLoop(gameState: GameState):
     clock = pygame.time.Clock()
-    cells = createCells()
-    drawGrid(display)
-    drawCells(cells, display)
 
     while True:
         clock.tick(FPS)
-  
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
+        handleEvents(gameState)
+        updateGameState(gameState)
+        drawGameState(gameState)
         pygame.display.update()
 
 def main():
     pygame.init()
     display = pygame.display.set_mode((WIDTH, WIDTH))
-    gameLoop(display)
+    cells = createCells()
+    gameState = GameState(display, cells)
+    gameLoop(gameState)
 
 if __name__ == "__main__":
     main()
